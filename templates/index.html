@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TinyURL - URL Shortener</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: white;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e1e5eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .custom-code-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .custom-code-toggle input {
+            cursor: pointer;
+        }
+
+        #customCodeInput {
+            display: none;
+        }
+
+        #customCodeInput.show {
+            display: block;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            display: none;
+            margin-top: 24px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            border: 2px solid #667eea;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .short-url {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .short-url a {
+            flex: 1;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1.1rem;
+            word-break: break-all;
+            text-decoration: none;
+        }
+
+        .short-url a:hover {
+            text-decoration: underline;
+        }
+
+        .copy-btn {
+            padding: 10px 16px;
+            width: auto;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .copy-btn.copied {
+            background: #10b981;
+        }
+
+        .error {
+            color: #ef4444;
+            background: #fef2f2;
+            border-color: #ef4444;
+        }
+
+        .error .result-label {
+            color: #ef4444;
+        }
+
+        .stats-section {
+            margin-top: 40px;
+        }
+
+        .stats-section h2 {
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .url-list {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .url-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e1e5eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .url-item:last-child {
+            border-bottom: none;
+        }
+
+        .url-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .url-short {
+            color: #667eea;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .url-short:hover {
+            text-decoration: underline;
+        }
+
+        .url-original {
+            color: #888;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 4px;
+        }
+
+        .url-clicks {
+            background: #f0f0f0;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: #888;
+        }
+
+        footer {
+            margin-top: auto;
+            padding-top: 40px;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>TinyURL</h1>
+            <p class="subtitle">Shorten your links in seconds</p>
+        </header>
+
+        <div class="card">
+            <form id="shortenForm">
+                <div class="input-group">
+                    <label for="urlInput">Enter your long URL</label>
+                    <input type="url" id="urlInput" placeholder="https://example.com/very/long/url/here" required>
+                </div>
+
+                <label class="custom-code-toggle">
+                    <input type="checkbox" id="customCodeCheckbox">
+                    <span>Use custom short code</span>
+                </label>
+
+                <div id="customCodeInput" class="input-group">
+                    <label for="customCode">Custom code (3-20 alphanumeric characters)</label>
+                    <input type="text" id="customCode" placeholder="my-link" pattern="[a-zA-Z0-9]{3,20}">
+                </div>
+
+                <button type="submit" id="submitBtn">Shorten URL</button>
+            </form>
+
+            <div id="result" class="result">
+                <p class="result-label">Your shortened URL:</p>
+                <div class="short-url">
+                    <a id="shortUrlLink" href="#" target="_blank"></a>
+                    <button type="button" class="copy-btn" id="copyBtn">Copy</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <h2>Recent URLs</h2>
+            <div class="url-list" id="urlList">
+                <div class="empty-state">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        Built with Flask & SQLite
+    </footer>
+
+    <script>
+        const form = document.getElementById('shortenForm');
+        const urlInput = document.getElementById('urlInput');
+        const customCodeCheckbox = document.getElementById('customCodeCheckbox');
+        const customCodeInput = document.getElementById('customCodeInput');
+        const customCode = document.getElementById('customCode');
+        const result = document.getElementById('result');
+        const shortUrlLink = document.getElementById('shortUrlLink');
+        const copyBtn = document.getElementById('copyBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const urlList = document.getElementById('urlList');
+
+        customCodeCheckbox.addEventListener('change', () => {
+            customCodeInput.classList.toggle('show', customCodeCheckbox.checked);
+            if (!customCodeCheckbox.checked) {
+                customCode.value = '';
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Shortening...';
+            result.classList.remove('show', 'error');
+
+            try {
+                const payload = { url: urlInput.value };
+                if (customCodeCheckbox.checked && customCode.value) {
+                    payload.custom_code = customCode.value;
+                }
+
+                const response = await fetch('/api/shorten', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Something went wrong');
+                }
+
+                shortUrlLink.href = data.short_url;
+                shortUrlLink.textContent = data.short_url;
+                result.classList.remove('error');
+                result.classList.add('show');
+                
+                loadUrls();
+            } catch (error) {
+                result.querySelector('.result-label').textContent = error.message;
+                shortUrlLink.textContent = '';
+                shortUrlLink.href = '#';
+                result.classList.add('show', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Shorten URL';
+            }
+        });
+
+        copyBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(shortUrlLink.href);
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                copyBtn.textContent = 'Failed';
+            }
+        });
+
+        async function loadUrls() {
+            try {
+                const response = await fetch('/api/urls');
+                const urls = await response.json();
+
+                if (urls.length === 0) {
+                    urlList.innerHTML = '<div class="empty-state">No URLs shortened yet</div>';
+                    return;
+                }
+
+                urlList.innerHTML = urls.map(url => `
+                    <div class="url-item">
+                        <div class="url-info">
+                            <a href="${url.short_url}" class="url-short" target="_blank">${url.short_url}</a>
+                            <div class="url-original" title="${url.original_url}">${url.original_url}</div>
+                        </div>
+                        <span class="url-clicks">${url.clicks} click${url.clicks !== 1 ? 's' : ''}</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                urlList.innerHTML = '<div class="empty-state">Failed to load URLs</div>';
+            }
+        }
+
+        loadUrls();
+    </script>
+</body>
+</html>
